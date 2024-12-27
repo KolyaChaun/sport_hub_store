@@ -107,7 +107,7 @@ def _check_warehouse_availability(data):
     ).count()
     if available_stock < quantity:
         return Response(
-            data=dict(msg="Sorry, but this product is out of stock"),
+            {"detail": "Sorry, but this product is out of stock"},
             status=HTTP_400_BAD_REQUEST,
         )
 
