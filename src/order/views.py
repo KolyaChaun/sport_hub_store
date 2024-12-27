@@ -27,27 +27,27 @@ class CreateBasket(mixins.CreateModelMixin, mixins.RetrieveModelMixin, GenericVi
             try:
                 user_basket = Basket.objects.get(user=request.user)
                 return Response(
-                    data=dict(
-                        basket_id=user_basket.id,
-                        user_id=request.user.id,
-                    ),
+                    {
+                        "basket_id": user_basket.id,
+                        "user_id": request.user.id,
+                    },
                     status=HTTP_201_CREATED,
                 )
             except Basket.DoesNotExist:
                 serializer.save(user=request.user)
                 return Response(
-                    data=dict(
-                        basket_id=serializer.instance.id,
-                        user_id=request.user.id,
-                    ),
+                    {
+                        "basket_id": serializer.instance.id,
+                        "user_id": request.user.id,
+                    },
                     status=HTTP_201_CREATED,
                 )
         else:
             serializer.save()
         return Response(
-            data=dict(
-                basket_id=serializer.instance.id,
-            ),
+            {
+                "basket_id": serializer.instance.id,
+            },
             status=HTTP_201_CREATED,
         )
 
