@@ -14,7 +14,11 @@ from delivery.views import (
     WarehousesView,
     WarehouseTypeView,
 )
-from order.views import CreateBasket, RetrieveUpdateDestroyBasketAPIView
+from order.views import (
+    BindBasketToUser,
+    CreateBasket,
+    RetrieveUpdateDestroyBasketAPIView,
+)
 from payment.views import CheckPaymentStatusView, PayCallbackView
 from products.views import (
     AvailableProductStockAPIView,
@@ -190,6 +194,11 @@ urlpatterns = [
         "payment/callback/",
         PayCallbackView.as_view(),
         name="pay_callback",
+    ),
+    path(
+        "baskets/bind/",
+        BindBasketToUser.as_view(),
+        name="bind-basket",
     ),
 ]
 
