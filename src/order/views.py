@@ -52,7 +52,7 @@ class CreateBasket(mixins.CreateModelMixin, mixins.RetrieveModelMixin, GenericVi
         )
 
 
-class BindBasketToUser(CreateAPIView):
+class MergeBasket(CreateAPIView):
     serializer_class = BasketSerializer
 
     def post(self, request, *args, **kwargs):
@@ -69,11 +69,6 @@ class BindBasketToUser(CreateAPIView):
                 data=dict(msg="Basket id is required"),
                 status=HTTP_400_BAD_REQUEST,
             )
-        try:
-            user_basket = Basket.objects.get(user=request.user)
-            user_basket.delete()
-        except Basket.DoesNotExist:
-            ...
 
         try:
             basket_to_bind = Basket.objects.get(id=basket_id)
@@ -82,12 +77,25 @@ class BindBasketToUser(CreateAPIView):
                 data=dict(msg="Basket not found"),
                 status=HTTP_404_NOT_FOUND,
             )
-        basket_to_bind.user = request.user
-        basket_to_bind.save()
+
+        user_basket, created = Basket.objects.get_or_create(user=request.user)
+
+        for item in basket_to_bind.items.all():
+            existing_item = user_basket.items.filter(
+                product=item.product, color=item.color, size=item.size
+            ).first()
+            if existing_item:
+                existing_item.quantity = existing_item.quantity + item.quantity
+                existing_item.save()
+            else:
+                item.basket = user_basket
+                item.save()
+
+        basket_to_bind.delete()
 
         return Response(
             data=dict(
-                basket_id=basket_to_bind.id,
+                basket_id=user_basket.id,
                 user_id=request.user.id,
             ),
             status=HTTP_200_OK,
