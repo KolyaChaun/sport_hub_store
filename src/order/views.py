@@ -1,6 +1,13 @@
 from rest_framework import mixins
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.status import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
+)
 from rest_framework.viewsets import GenericViewSet
 
 from order.models import Basket, BasketItem
@@ -42,6 +49,56 @@ class CreateBasket(mixins.CreateModelMixin, mixins.RetrieveModelMixin, GenericVi
                 "basket_id": serializer.instance.id,
             },
             status=HTTP_201_CREATED,
+        )
+
+
+class MergeBasket(CreateAPIView):
+    serializer_class = BasketSerializer
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(
+                data=dict(msg="User is not authenticated"),
+                status=HTTP_401_UNAUTHORIZED,
+            )
+
+        basket_id = request.data.get("basket_id")
+
+        if not basket_id:
+            return Response(
+                data=dict(msg="Basket id is required"),
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            basket_to_bind = Basket.objects.get(id=basket_id)
+        except Basket.DoesNotExist:
+            return Response(
+                data=dict(msg="Basket not found"),
+                status=HTTP_404_NOT_FOUND,
+            )
+
+        user_basket, created = Basket.objects.get_or_create(user=request.user)
+
+        for item in basket_to_bind.items.all():
+            existing_item = user_basket.items.filter(
+                product=item.product, color=item.color, size=item.size
+            ).first()
+            if existing_item:
+                existing_item.quantity = existing_item.quantity + item.quantity
+                existing_item.save()
+            else:
+                item.basket = user_basket
+                item.save()
+
+        basket_to_bind.delete()
+
+        return Response(
+            data=dict(
+                basket_id=user_basket.id,
+                user_id=request.user.id,
+            ),
+            status=HTTP_200_OK,
         )
 
 
