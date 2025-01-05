@@ -1,22 +1,29 @@
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponseNotFound, JsonResponse
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_400_BAD_REQUEST,
+    HTTP_404_NOT_FOUND,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-from rest_framework.views import APIView
 
 from config import settings
-from config.settings import LIQPAY_PRIVATE_KEY, LIQPAY_PUBLIC_KEY
+from config.settings import (
+    LIQPAY_PRIVATE_KEY,
+    LIQPAY_PUBLIC_KEY,
+    RESULT_URL,
+    SERVER_URL,
+)
 from delivery.models import PAYMENT_OK, Order
 from payment.liqpay_client import LiqPay
+from payment.serializers import PaymentSerializer
+from products.models import SOLD, WarehouseItem
 
 
-class PayCallbackView(View):
+class PayCallbackView(CreateAPIView):
     @method_decorator(csrf_exempt, name="dispatch")
     def post(self, request, *args, **kwargs):
         liqpay = LiqPay(LIQPAY_PUBLIC_KEY, LIQPAY_PRIVATE_KEY)
@@ -31,14 +38,63 @@ class PayCallbackView(View):
                     order = Order.objects.get(pk=order_id)
                     order.status = PAYMENT_OK
                     order.save()
+
                 except Order.DoesNotExist:
                     return HttpResponseNotFound("Order not found")
 
-            return HttpResponse(request, response)
+            return JsonResponse(response)
 
 
-class CheckPaymentStatusView(APIView):
-    def post(self, request):
+class CreatePaymentFormView(CreateAPIView):
+    serializer_class = PaymentSerializer
+
+    def post(self, request, *args, **kwargs):
+        try:
+            order_id = request.data.get("order_id")
+            order = Order.objects.get(pk=order_id)
+
+            warehouse_items = WarehouseItem.objects.filter(order=order, status=SOLD)
+
+            if not warehouse_items.exists():
+                return Response(
+                    data=dict(msg="No items linked to this order."),
+                    status=HTTP_404_NOT_FOUND,
+                )
+
+            total_amount = float(sum(item.product.price for item in warehouse_items))
+
+        except Order.DoesNotExist:
+            return Response(
+                data=dict(msg="Order does not exist."),
+                status=HTTP_404_NOT_FOUND,
+            )
+
+        liqpay = LiqPay(LIQPAY_PUBLIC_KEY, LIQPAY_PRIVATE_KEY)
+        params = {
+            "version": "3",
+            "action": "pay",
+            "amount": total_amount,
+            "currency": "UAH",
+            "description": f"Payment for Order #{order.id}",
+            "sandbox": 1,
+            "order_id": str(order.id),
+            "public_key": LIQPAY_PUBLIC_KEY,
+            "server_url": SERVER_URL,
+            "result_url": RESULT_URL,
+        }
+
+        payment_form = liqpay.cnb_form(params)
+
+        return Response(
+            data=dict(
+                payment_form=payment_form,
+                order=order.id,
+            ),
+        )
+
+
+class CheckPaymentStatusView(CreateAPIView):
+    def post(self, request, *args, **kwargs):
         try:
             order_id = request.data.get("order_id")
             if not order_id:

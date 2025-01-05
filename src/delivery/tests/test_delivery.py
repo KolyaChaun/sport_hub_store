@@ -1,8 +1,8 @@
+import uuid
+
 import pytest
 from django.urls import reverse
-from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
-
-from delivery.views import total_sum_basket_items
+from rest_framework.status import HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db
@@ -56,9 +56,27 @@ def test_search_settlement_streets_api_nova_post(api_client):
 
 
 @pytest.mark.django_db
-def test_total_sum_basket_items(basket_items):
-    total = total_sum_basket_items(basket_items)
-    assert total == str(849)
+def test_user_cannot_create_order_from_someone_else_basket(
+    api_client, test_user_mark, another_user, another_users_basket, order_data
+):
+    api_client.force_authenticate(user=test_user_mark)
+    order_data["basket_id"] = another_users_basket.id
+    response = api_client.post(reverse("order-create"), data=order_data)
+
+    assert response.status_code == HTTP_403_FORBIDDEN
+    assert (
+        response.data["msg"] == "You cannot place an order from someone else's basket"
+    )
+
+
+@pytest.mark.django_db
+def test_create_order_from_non_existing_basket(api_client, test_user_mark, order_data):
+    api_client.force_authenticate(user=test_user_mark)
+    order_data["basket_id"] = str(uuid.uuid4())
+
+    response = api_client.post(reverse("order-create"), data=order_data)
+    assert response.status_code == HTTP_404_NOT_FOUND
+    assert response.data["msg"] == "Basket does not exist!"
 
 
 @pytest.mark.django_db
@@ -70,7 +88,7 @@ def test_user_can_create_order(
     basket_items,
 ):
     api_client.force_authenticate(user=test_user_mark)
-    response = api_client.post(reverse("delivery-create"), data=order_data)
+    response = api_client.post(reverse("order-create"), data=order_data)
 
     assert response.status_code == HTTP_200_OK
     assert (
@@ -85,7 +103,7 @@ def test_user_cannot_create_order_with_empty_basket(
 ):
     api_client.force_authenticate(user=test_user_mark)
     order_data["basket_id"] = empty_basket.id
-    response = api_client.post(reverse("delivery-create"), data=order_data)
+    response = api_client.post(reverse("order-create"), data=order_data)
 
     assert response.status_code == HTTP_404_NOT_FOUND
     assert (
