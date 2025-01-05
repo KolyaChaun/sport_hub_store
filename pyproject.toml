@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "backend"
+name = "sport_hub_store"
 version = "0.1.0"
 description = ""
 authors = ["Vita <vitay2715@gmail.com>"]
