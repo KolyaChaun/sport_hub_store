@@ -20,7 +20,7 @@ from config.settings import (
 from delivery.models import PAYMENT_OK, Order
 from payment.liqpay_client import LiqPay
 from payment.serializers import PaymentSerializer
-from products.models import SOLD, WarehouseItem
+from products.models import IN_STOCK, SOLD, WarehouseItem
 
 
 class PayCallbackView(CreateAPIView):
@@ -33,11 +33,22 @@ class PayCallbackView(CreateAPIView):
         if sign == signature:
             response = liqpay.decode_data_from_str(data)
             order_id = response.get("order_id")
+            payment_status = response.get("status")
+
             if order_id:
                 try:
                     order = Order.objects.get(pk=order_id)
-                    order.status = PAYMENT_OK
-                    order.save()
+                    if payment_status == "success":
+                        order.status = PAYMENT_OK
+                        order.save()
+                    elif payment_status in ["failure", "reversed"]:
+                        warehouse_items = WarehouseItem.objects.filter(
+                            order=order, status=SOLD
+                        )
+                        for item in warehouse_items:
+                            item.status = IN_STOCK
+                            item.order = None
+                            item.save()
 
                 except Order.DoesNotExist:
                     return HttpResponseNotFound("Order not found")
