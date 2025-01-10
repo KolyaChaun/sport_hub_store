@@ -15,7 +15,7 @@ from delivery.views import (
     WarehouseTypeView,
 )
 from order.views import CreateBasket, MergeBasket, RetrieveUpdateDestroyBasketAPIView
-from payment.views import CheckPaymentStatusView, PayCallbackView
+from payment.views import CheckPaymentStatusView, CreatePaymentFormView, PayCallbackView
 from products.views import (
     AvailableProductStockAPIView,
     ProductFilterView,
@@ -171,12 +171,13 @@ urlpatterns = [
         AddressesView.as_view(),
         name="nova-search-street",
     ),
-    # DELIVERY
+    # ORDER
     path(
-        "delivery/orders/create/",
+        "order/create/",
         CreateOrderView.as_view(),
-        name="delivery-create",
+        name="order-create",
     ),
+    # DELIVERY
     path(
         "delivery/history/",
         OrderHistoryView.as_view(),
@@ -191,7 +192,12 @@ urlpatterns = [
     path(
         "payment/callback/",
         PayCallbackView.as_view(),
-        name="pay_callback",
+        name="callback",
+    ),
+    path(
+        "payment/create/",
+        CreatePaymentFormView.as_view(),
+        name="create-payment-form",
     ),
     path(
         "baskets/merge/",

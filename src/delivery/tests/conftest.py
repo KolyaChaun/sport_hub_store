@@ -24,6 +24,24 @@ def test_user_mark(db):
 
 
 @pytest.fixture
+def another_user(db):
+    return User.objects.create_user(
+        username="another",
+        email="another_user@test.com",
+        password="testpassword",
+        first_name="Test2",
+        last_name="Test2",
+        surname="Test2",
+        phone_number="+380962590574",
+    )
+
+
+@pytest.fixture
+def another_users_basket(db, another_user):
+    return Basket.objects.create(user=another_user)
+
+
+@pytest.fixture
 def basket(test_user_mark):
     return Basket.objects.create(user=test_user_mark)
 

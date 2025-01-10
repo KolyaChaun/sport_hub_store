@@ -6,17 +6,10 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
 
-from config.settings import (
-    LIQPAY_PRIVATE_KEY,
-    LIQPAY_PUBLIC_KEY,
-    RESULT_URL,
-    SERVER_URL,
-)
 from delivery.models import Order
 from delivery.nova_post_api_client import NovaPostApiClient
 from delivery.serializers import OrderSerializer
 from order.models import Basket, BasketItem
-from payment.liqpay_client import LiqPay
 from products.models import IN_STOCK, SOLD, WarehouseItem
 
 
@@ -57,15 +50,6 @@ class AddressesView(NovaPostView):
         return self.client.search_settlement_streets(
             street_name, ref, self.limit, self.page
         )
-
-
-def total_sum_basket_items(basket_items):
-    total_sum = 0
-    for basket_item in basket_items:
-        product = basket_item.product
-        total_sum += product.price * basket_item.quantity
-
-    return str(total_sum)
 
 
 def update_status_warehouse_items(basket_id, order):
@@ -114,34 +98,15 @@ class CreateOrderView(CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
-
         update_status_warehouse_items(
             basket_id=serializer.initial_data.get("basket_id"), order=order
         )
 
-        liqpay = LiqPay(LIQPAY_PUBLIC_KEY, LIQPAY_PRIVATE_KEY)
-        params = {
-            "version": "3",
-            "action": "pay",
-            "amount": total_sum_basket_items(basket_items),
-            "currency": "UAH",
-            "description": "TEST",
-            "sandbox": 1,
-            "order_id": str(order.id),
-            "public_key": LIQPAY_PUBLIC_KEY,
-            "server_url": SERVER_URL,
-            "result_url": RESULT_URL,
-        }
-
-        payment_form = liqpay.cnb_form(params)
-
         return Response(
             data=dict(
                 msg="Your order has been created successfully! Go to checkout!",
-                payment_form=payment_form,
                 order=order.id,
-            ),
-            status=HTTP_200_OK,
+            )
         )
 
 

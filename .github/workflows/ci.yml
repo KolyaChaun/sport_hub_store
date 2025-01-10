@@ -14,7 +14,10 @@ jobs:
           python-version: '3.10'
 
       - name: Install poetry
-        run: pip install poetry && poetry install
+        run: pip install poetry==1.7.0
+
+      - name: Install poetry
+        run: poetry install --no-root
 
       - name: Run formatters
         run: poetry run black --check . && poetry run isort --check . --profile black
@@ -33,7 +36,10 @@ jobs:
           echo "${{ secrets.GCLOUD_SECRET_BASE64 }}" | base64 --decode > /tmp/gcloud-secret.json
 
       - name: Install poetry dependencies
-        run: pip install poetry==1.7.0 setuptools && poetry install
+        run: pip install poetry==1.7.0 setuptools
+
+      - name: Install poetry dependencies
+        run: poetry install  --no-root
 
       - name: Set DJANGO_SETTINGS_MODULE to test settings
         run: echo "DJANGO_SETTINGS_MODULE=config.settings_test" >> $GITHUB_ENV
