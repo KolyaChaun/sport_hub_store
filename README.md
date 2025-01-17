@@ -1,110 +1,102 @@
-# **SPORT HUB STORE**
+# SPORT HUB STORE
 
-### [SPORT HUB](https://teamchallenge-sport-store-frontend.vercel.app) is an e-commerce platform for hassle-free shopping.
+## Overview
 
-### In this project implemented:
+[SPORT HUB](https://teamchallenge-sport-store-frontend.vercel.app) is an e-commerce platform designed for hassle-free
+shopping.
 
-- Product catalogue: structure of presentation, search, sorting, product filters.
+## Features
 
+- **Product Catalogue**: Structure of presentation, search, sorting, product filters.
+- **Shopping Cart and Checkout**: Adding, updating, deleting products from the shopping cart, and proceeding to
+  checkout.
+- **User Personal Account**: User registration, email confirmation, authorization, personal data management, and viewing
+  order history for a specific period.
+- **Admin Panel**: Interface for managing the store, adding products and categories, and handling users.
+- **Integration with NOVA POST API**: Delivery options, including courier, branch, and parcel locker services.
+- **Integration with LiqPay**: Payment by card and invoice generation for customers.
 
-- Shopping cart and checkout: adding, updating, deleting products to the shopping cart, and checkout.
-
-
-- User's personal account: the ability to register, confirm the user's email, authorise and manage personal data, view
-  the order history for a certain period.
-
-
-- Admin panel: an interface for managing the store, adding products, categories, users, etc.
-
-
-- Integration with the NOVA POST API: the possibility of delivery by courier, to a branch, and parcel locker.
-
-
-- Integration with LiqPay: the ability to pay by card, get invoice.
+## Logo
 
 ![Logo](docs/logo.png)
 
-## Stack:
+## Tech Stack
 
 [![Stack](https://skillicons.dev/icons?i=python,docker,postgres,django,gcp&theme=dark&perline=10)](https://skillicons.dev)
 
-## Installation:
+## Getting Started
 
-### Clone this repository using GitHub Desktop:
+### Clone the Repository
 
-![Clone](docs/gitinstal.png)
+- Use GitHub Desktop or another Git client:
 
-## Preparations:
+  ![Clone](docs/gitinstal.png)
 
-### .env:
+### Environment Setup
 
-Please, make sure that you have a .env in the root folder. Feel free to specify values of environmental variables as you
-wish, but make sure that your .env file structured like .env.example.
+- Ensure you have a `.env` file in the root directory.
+- Use the provided `.env.example` file to structure and populate variables as per your requirements.
 
-## Start develop with Docker:
+### Run the Application with Docker
 
-Firstly, you need to have Docker installed in your system. If you haven't installed Docker yet,
-visit https://docs.docker.com/get-docker/
+- Ensure you have Docker installed [Install Docker](https://docs.docker.com/get-docker/).
+- Build and run the application:
 
-## Commands:
-
-- To list available commands for make:
-  ```shell
-  $ make
-
-  Please use `make <target>' where <target> is one of
-  build_and_run             Run and build application
-  drop_all_containers       Drop all containers
-  help                      Display help message
-  migrate                   Make migrate
-  open_log                  Open api log
-  open_shell                Open shell to the app container
-  run_app                   Run application
-  run_migrate               Run migrate
-  super_user                Make super user
+  ```bash
+  docker compose up -d --build
   ```
 
-- Run and build application:
+### Database Migration
 
-      make build_and_run
+- Create initial migrations:
 
-- Run application:
+  ```bash
+  docker compose exec api ./src/manage.py makemigrations
+  ```
+- Apply migrations:
 
-      make build_and_run
+  ```bash
+  docker compose exec api ./src/manage.py migrate
+  ```
 
-## DB migration:
+### Install Dependencies
 
-- Make migrations of the DB:
+- This project uses [Poetry](https://python-poetry.org/).
+- Install all required packages:
 
-      make migrate
+  ```bash
+  poetry install
+  ```
+- Add new packages as needed:
 
-- Migrate the DB:
+  ```bash
+  poetry add <package_name>
+  ```
 
-      make run_migrate
+### Running Tests
 
-## Poetry:
+- Start a shell in the app container:
 
-In this project used [Poetry](https://python-poetry.org/) environment
+  ```bash
+  docker compose exec api bash
+  ```
+- Execute tests with pytest:
 
-- Load all needed packages
+  ```bash
+  poetry run pytest src
+  ```
 
-      poetry install
+### API Documentation
 
-- Add new package
+- Access the OpenAPI schema:
 
-      poetry add <package_name>
+  [Swagger UI](http://host:port/swagger/)
 
-## Swagger:
+### Deployment
 
-- Show OpenApi schema
+- This project is deployed on [Google Cloud Platform](https://cloud.google.com).
 
-      http://host:port/swagger/
-
-## Deployment:
-
-We chose [Google Cloud Platform](https://cloud.google.com) to deploy our project
-
-## Contributors:
+## Contributors
 
 - [Vita Yushchyk](https://github.com/vitayushchyk)
 - [Mykola Chaiun](https://github.com/KolyaChaun)
