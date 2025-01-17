@@ -1,7 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 User = get_user_model()
+
+admin.site.site_header = "SportHub Administration"
+admin.site.index_title = "Ласкаво просимо в адмінці магазину SportHub"
 
 
 @admin.register(User)
@@ -18,3 +22,6 @@ class UserAdmin(admin.ModelAdmin):
         "is_superuser",
         "email",
     ]
+
+
+admin.site.unregister(Group)
